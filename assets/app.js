@@ -138,13 +138,13 @@ function renderHead() {
             >›</button>
           </div>
         </th>
-        <th rowspan="2" class="game-total-head">Итого игра</th>
+        <th rowspan="2" class="game-total-head">Общий балл</th>
       </tr>
       <tr>
         <th>Вопрос 1</th>
         <th>Вопрос 2</th>
         <th>Вопрос 3</th>
-        <th class="stage-total-head">Итого</th>
+        <th class="stage-total-head">Итого этап</th>
       </tr>
     `;
     return;
@@ -157,7 +157,7 @@ function renderHead() {
         <th>В1</th>
         <th>В2</th>
         <th>В3</th>
-        <th class="stage-total-head">Итого</th>
+        <th class="stage-total-head">Итого этап</th>
       `,
     )
     .join("");
@@ -166,7 +166,7 @@ function renderHead() {
     <tr>
       <th rowspan="2" class="team-head">Команда</th>
       ${stageHeaders}
-      <th rowspan="2" class="game-total-head">Итого игра</th>
+      <th rowspan="2" class="game-total-head">Общий балл</th>
     </tr>
     <tr>${questionHeaders}</tr>
   `;
