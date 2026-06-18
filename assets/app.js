@@ -113,10 +113,31 @@ function renderPopupScoreCell(team, stage, questionIndex) {
 function renderHead() {
   if (activeView !== "all") {
     const stage = stages.find((item) => item.id === activeView);
+    const stageIndex = stages.findIndex((item) => item.id === activeView);
+    const previousStage = stages[stageIndex - 1];
+    const nextStage = stages[stageIndex + 1];
     headNode.innerHTML = `
       <tr>
         <th rowspan="2" class="team-head">Команда</th>
-        <th colspan="4" class="stage-head">${stage.title}</th>
+        <th colspan="4" class="stage-head">
+          <div class="stage-nav">
+            <button
+              class="stage-nav-button"
+              data-stage-nav="${previousStage?.id || ""}"
+              type="button"
+              aria-label="Предыдущий этап"
+              ${previousStage ? "" : "disabled"}
+            >‹</button>
+            <span>${stage.title}</span>
+            <button
+              class="stage-nav-button"
+              data-stage-nav="${nextStage?.id || ""}"
+              type="button"
+              aria-label="Следующий этап"
+              ${nextStage ? "" : "disabled"}
+            >›</button>
+          </div>
+        </th>
         <th rowspan="2" class="game-total-head">Итого игра</th>
       </tr>
       <tr>
@@ -388,6 +409,15 @@ rowsNode.addEventListener("click", (event) => {
   if (!button) return;
 
   showPopover(button);
+});
+
+headNode.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-stage-nav]");
+  if (!button || !button.dataset.stageNav) return;
+
+  activeView = button.dataset.stageNav;
+  hidePopover();
+  render();
 });
 
 popoverNode.addEventListener("click", (event) => {

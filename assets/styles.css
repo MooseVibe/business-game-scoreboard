@@ -91,11 +91,13 @@ button {
   height: 48px;
   border: 0.5px solid rgba(255, 255, 255, 0.28);
   border-radius: 14px;
-  color: var(--ink);
-  background: var(--cell-beige);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
   cursor: pointer;
   font-size: 28px;
   line-height: 1;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.68);
+  backdrop-filter: blur(14px) saturate(1.15);
 }
 
 .view-popover {
@@ -327,6 +329,41 @@ button {
   font-size: 24px;
 }
 
+.stage-nav {
+  display: grid;
+  grid-template-columns: 48px 1fr 48px;
+  align-items: center;
+  gap: 12px;
+  width: min(520px, 100%);
+  margin: 0 auto;
+}
+
+.stage-nav-button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 34px;
+  border: 0.5px solid rgba(255, 255, 255, 0.28);
+  border-radius: 10px;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+.stage-nav-button:hover:not(:disabled),
+.stage-nav-button:focus-visible:not(:disabled) {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.stage-nav-button:disabled {
+  opacity: 0;
+  cursor: default;
+}
+
 .score-table thead tr:nth-child(2) th {
   top: 48px;
 }
@@ -360,14 +397,19 @@ button {
 }
 
 .team-cell {
+  padding: 0;
   font-size: 22px;
 }
 
 .team-rule-button {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  min-height: 40px;
+  width: 100%;
+  min-height: 96px;
+  height: 100%;
+  padding: 7px;
   border: 0;
   color: var(--ink);
   background: transparent;
