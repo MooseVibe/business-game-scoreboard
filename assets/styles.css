@@ -29,7 +29,7 @@ body {
   color: var(--ink);
   background:
     linear-gradient(rgba(4, 8, 12, 0.34), rgba(4, 8, 12, 0.34)),
-    url("game-bg.png");
+    url("game-bg.webp");
   background-size: cover;
   background-position: center;
 }
