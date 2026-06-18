@@ -141,9 +141,9 @@ function renderHead() {
         <th rowspan="2" class="game-total-head">Итого игра</th>
       </tr>
       <tr>
-        <th>В1</th>
-        <th>В2</th>
-        <th>В3</th>
+        <th>Вопрос 1</th>
+        <th>Вопрос 2</th>
+        <th>Вопрос 3</th>
         <th class="stage-total-head">Итого</th>
       </tr>
     `;
