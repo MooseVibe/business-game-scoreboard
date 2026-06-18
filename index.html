@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Прототип бизнес-игры</title>
+    <link rel="stylesheet" href="assets/styles.css">
+  </head>
+  <body>
+    <main class="game-shell">
+      <div class="view-menu">
+        <button class="menu-trigger" aria-label="Выбрать вид таблицы" type="button">☰</button>
+        <div class="view-popover" aria-label="Вид таблицы">
+          <button class="view-option" data-view="production" type="button">Производство</button>
+          <button class="view-option" data-view="marketing" type="button">Маркетинг</button>
+          <button class="view-option" data-view="sales" type="button">Реализация</button>
+          <button class="view-option active" data-view="all" type="button">Общая таблица</button>
+          <button class="view-option clear-view-option" id="clearTable" type="button">Очистить таблицу</button>
+        </div>
+      </div>
+
+      <section class="timer-card" aria-label="Секундомер">
+        <span class="section-label">Секундомер</span>
+        <div class="timer-row">
+          <div class="timer-display" id="timerDisplay">00:30</div>
+          <div class="timer-actions">
+            <button class="timer-button" data-timer-button="30">30 c</button>
+            <button class="timer-button" data-timer-button="60">60 c</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="score-board" aria-label="Общая таблица баллов">
+        <div class="table-wrap">
+          <table class="score-table">
+            <thead id="scoreHead"></thead>
+            <tbody id="scoreRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="score-popover" id="scorePopover" hidden>
+        <div class="popover-title" id="popoverTitle"></div>
+        <form class="custom-score-form" id="customScoreForm">
+          <input id="customScoreInput" type="number" inputmode="numeric" placeholder="Любое число">
+          <button class="chip" type="submit">OK</button>
+        </form>
+        <div class="popover-actions">
+          <button class="chip" data-set-score="10">10</button>
+          <button class="chip" data-set-score="20">20</button>
+          <button class="chip" data-set-score="50">50</button>
+        </div>
+      </div>
+
+      <div class="team-rule-popover" id="teamRulePopover" hidden>
+        <div class="popover-title" id="teamRuleTitle"></div>
+        <div class="team-rule-options">
+          <button data-team-modifier="0" type="button">Без правила</button>
+          <button data-team-modifier="-10" type="button">-10 каждый раз</button>
+          <button data-team-modifier="-20" type="button">-20 каждый раз</button>
+          <button data-team-modifier="-30" type="button">-30 каждый раз</button>
+        </div>
+        <form class="custom-score-form" id="customModifierForm">
+          <input id="customModifierInput" type="number" inputmode="numeric" placeholder="Свое правило">
+          <button class="chip" type="submit">OK</button>
+        </form>
+      </div>
+    </main>
+
+    <script src="assets/app.js"></script>
+  </body>
+</html>
