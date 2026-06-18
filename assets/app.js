@@ -33,6 +33,7 @@ const clearTableButton = document.querySelector("#clearTable");
 const viewButtons = document.querySelectorAll("[data-view]");
 const viewMenu = document.querySelector(".view-menu");
 const menuTrigger = document.querySelector(".menu-trigger");
+const tableWrap = document.querySelector(".table-wrap");
 
 function createEmptyScores() {
   return Object.fromEntries(
@@ -468,6 +469,26 @@ viewButtons.forEach((button) => {
 });
 
 menuTrigger.addEventListener("click", () => viewMenu.classList.toggle("pinned"));
+
+tableWrap.addEventListener(
+  "wheel",
+  (event) => {
+    if (activeView !== "all" || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+
+    const maxScrollLeft = tableWrap.scrollWidth - tableWrap.clientWidth;
+    if (maxScrollLeft <= 0) return;
+
+    const nextScrollLeft = Math.min(
+      Math.max(tableWrap.scrollLeft + event.deltaY, 0),
+      maxScrollLeft,
+    );
+    if (nextScrollLeft === tableWrap.scrollLeft) return;
+
+    event.preventDefault();
+    tableWrap.scrollLeft = nextScrollLeft;
+  },
+  { passive: false },
+);
 
 render();
 renderTimer();
