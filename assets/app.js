@@ -294,36 +294,62 @@ function render() {
 
 function renderFortuneWheel() {
   if (!fortuneRules.length) {
-    fortuneWheel.style.background = "rgba(255, 247, 223, 0.38)";
-    fortuneWheel.innerHTML = "";
+    fortuneWheel.innerHTML = `<div class="fortune-empty-wheel"></div>`;
     fortuneSpinButton.disabled = true;
     renderFortuneRuleEditor();
     return;
   }
 
   const sliceSize = 360 / fortuneRules.length;
-  const gradient = fortuneRules
-    .map((_, index) => {
-      const start = index * sliceSize;
-      const end = (index + 1) * sliceSize;
-      return `${fortuneColors[index % fortuneColors.length]} ${start}deg ${end}deg`;
-    })
-    .join(", ");
-
-  fortuneWheel.style.background = `conic-gradient(from -90deg, ${gradient})`;
-  fortuneWheel.innerHTML = fortuneRules
+  const slices = fortuneRules
     .map((rule, index) => {
-      const angle = index * sliceSize + sliceSize / 2;
+      const startAngle = -90 + index * sliceSize;
+      const endAngle = startAngle + sliceSize;
+      const labelAngle = startAngle + sliceSize / 2;
+      const labelPoint = polarPoint(50, 50, 35, labelAngle);
       return `
-        <span class="fortune-label" style="--angle: ${angle}deg" title="${escapeHtml(rule.text)}">
-          <span class="fortune-label-text">${escapeHtml(rule.text)}</span>
-        </span>
+        <g class="fortune-slice">
+          <path d="${fortuneSlicePath(50, 50, 50, startAngle, endAngle)}" fill="${fortuneColors[index % fortuneColors.length]}"></path>
+          <text
+            x="${labelPoint.x}"
+            y="${labelPoint.y}"
+            class="fortune-label-text"
+            text-anchor="middle"
+            dominant-baseline="middle"
+          >${escapeHtml(truncateFortuneLabel(rule.text))}</text>
+        </g>
       `;
     })
     .join("");
+  fortuneWheel.innerHTML = `
+    <svg class="fortune-wheel-svg" viewBox="0 0 100 100" aria-hidden="true">
+      ${slices}
+      <circle class="fortune-inner-ring" cx="50" cy="50" r="19"></circle>
+    </svg>
+  `;
 
   renderFortuneRuleEditor();
   fortuneSpinButton.disabled = isWheelSpinning;
+}
+
+function polarPoint(cx, cy, radius, angle) {
+  const radians = angle * Math.PI / 180;
+  return {
+    x: cx + Math.cos(radians) * radius,
+    y: cy + Math.sin(radians) * radius,
+  };
+}
+
+function fortuneSlicePath(cx, cy, radius, startAngle, endAngle) {
+  const start = polarPoint(cx, cy, radius, startAngle);
+  const end = polarPoint(cx, cy, radius, endAngle);
+  const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0;
+  return `M ${cx} ${cy} L ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${end.x} ${end.y} Z`;
+}
+
+function truncateFortuneLabel(text) {
+  const value = String(text);
+  return value.length > 12 ? `${value.slice(0, 11)}…` : value;
 }
 
 function renderFortuneRuleEditor() {

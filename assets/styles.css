@@ -490,40 +490,39 @@ button {
   transition: transform 4600ms cubic-bezier(0.13, 0.72, 0.08, 1);
 }
 
-.fortune-wheel::after {
-  content: "";
-  position: absolute;
-  inset: 19%;
-  border-radius: 50%;
-  background: rgba(255, 247, 223, 0.34);
-  box-shadow: inset 0 0 0 1px rgba(35, 20, 8, 0.16);
+.fortune-wheel-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
-.fortune-label {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  width: min(24vh, 250px);
-  height: 26px;
-  color: var(--ink);
-  font-size: clamp(13px, 1.35vw, 18px);
-  font-weight: 700;
-  line-height: 22px;
-  text-shadow: 0 1px rgba(255, 255, 255, 0.55);
-  transform: rotate(var(--angle)) translateX(calc(min(36vh, 450px, calc((100vw - 120px) / 2)) - 12px)) rotate(180deg);
-  transform-origin: left center;
+.fortune-slice path {
+  stroke: rgba(35, 20, 8, 0.08);
+  stroke-width: 0.18;
 }
 
 .fortune-label-text {
-  display: block;
+  fill: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 4.2px;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: rgba(255, 255, 255, 0.42);
+  stroke-width: 0.45px;
+  stroke-linejoin: round;
+}
+
+.fortune-inner-ring {
+  fill: rgba(255, 247, 223, 0.34);
+  stroke: rgba(35, 20, 8, 0.16);
+  stroke-width: 0.25;
+}
+
+.fortune-empty-wheel {
   width: 100%;
-  padding: 2px 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(255, 247, 223, 0.38);
 }
 
 .fortune-pointer {
@@ -1158,12 +1157,8 @@ button {
     width: min(92vw, 520px);
   }
 
-  .fortune-label {
-    width: min(26vw, 136px);
-    height: 20px;
-    font-size: 11px;
-    line-height: 17px;
-    transform: rotate(var(--angle)) translateX(calc(min(46vw, 260px) - 12px)) rotate(180deg);
+  .fortune-label-text {
+    font-size: 3.8px;
   }
 
   .fortune-spin {
