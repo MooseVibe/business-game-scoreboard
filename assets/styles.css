@@ -506,7 +506,7 @@ button {
   height: 100%;
   color: var(--ink);
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 4px;
+  font-size: 3.35px;
   font-weight: 700;
   line-height: 7.2px;
   white-space: nowrap;
@@ -1162,7 +1162,7 @@ button {
   }
 
   .fortune-label-box {
-    font-size: 3.8px;
+    font-size: 3.2px;
   }
 
   .fortune-spin {

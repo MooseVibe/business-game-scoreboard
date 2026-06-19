@@ -19,7 +19,16 @@ const fortuneColors = [
   "#c9edf0",
   "#ead8b6",
 ];
-const defaultFortuneRules = Array.from({ length: 12 }, (_, index) => String(index + 1));
+const defaultFortuneRules = [
+  "Право на 1 ошибку",
+  "Переброс кубика",
+  "Двойное время на ответ",
+  "Бросить 2 кубика – выбрать лучший",
+  "Подсказка от ведущего",
+  "50/50 для тестового вопроса",
+  "Выбор категории вопроса",
+  "Риск",
+];
 
 let nextFortuneRuleId = 0;
 let scores = createEmptyScores();
