@@ -1,5 +1,5 @@
-# Business Game Scoreboard
+# Бизнес игра
 
-Static HTML/CSS/JS scoreboard for a four-team business game.
+HTML/CSS/JS табло для бизнес-игры на четыре команды.
 
-Open `index.html` locally or publish the folder with GitHub Pages.
+Можно открыть локально через `index.html` или использовать опубликованную версию на GitHub Pages.
