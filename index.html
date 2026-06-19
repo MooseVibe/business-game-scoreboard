@@ -9,7 +9,10 @@
   <body>
     <main class="game-shell">
       <div class="view-menu">
-        <button class="menu-trigger" aria-label="Выбрать вид таблицы" type="button">☰</button>
+        <div class="top-actions">
+          <button class="fortune-trigger" id="fortuneOpen" type="button">Колесо фортуны</button>
+          <button class="menu-trigger" aria-label="Выбрать вид таблицы" type="button">☰</button>
+        </div>
         <div class="view-popover" aria-label="Вид таблицы">
           <button class="view-option" data-view="production" type="button">Производство</button>
           <button class="view-option" data-view="marketing" type="button">Маркетинг</button>
@@ -37,6 +40,40 @@
           </table>
         </div>
       </section>
+
+      <section class="fortune-screen" id="fortuneScreen" aria-label="Колесо фортуны" hidden>
+        <button class="fortune-back" id="fortuneBack" type="button">‹ Вернуться к таблице</button>
+        <button class="fortune-rules-open" id="fortuneRulesOpen" type="button">Правила</button>
+        <button class="fortune-reset" id="fortuneReset" type="button">Сбросить прокруты</button>
+        <aside class="fortune-history" aria-label="История прокрутов">
+          <div class="fortune-history-title">Прокруты</div>
+          <ol class="fortune-history-list" id="fortuneHistory"></ol>
+        </aside>
+        <div class="fortune-layout">
+          <div class="fortune-wheel-panel">
+            <div class="fortune-result" id="fortuneResult">Готово к прокрутке</div>
+            <div class="fortune-wheel-wrap">
+              <div class="fortune-pointer" aria-hidden="true"></div>
+              <div class="fortune-wheel" id="fortuneWheel"></div>
+              <button class="fortune-spin" id="fortuneSpin" type="button">Крутить</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="fortune-rules-modal" id="fortuneRulesModal" hidden>
+        <div class="fortune-rules-dialog" role="dialog" aria-modal="true" aria-label="Правила колеса фортуны">
+          <div class="fortune-rules-header">
+            <div class="fortune-rules-title">Правила колеса</div>
+            <button class="fortune-rule-add" id="fortuneRuleAdd" type="button">Добавить правило</button>
+            <button class="fortune-rules-close" id="fortuneRulesClose" type="button" aria-label="Закрыть">×</button>
+          </div>
+          <div class="fortune-rules" id="fortuneRules"></div>
+          <div class="fortune-rules-footer">
+            <button class="fortune-rules-done" id="fortuneRulesDone" type="button">Готово</button>
+          </div>
+        </div>
+      </div>
 
       <div class="score-popover" id="scorePopover" hidden>
         <div class="popover-title" id="popoverTitle"></div>

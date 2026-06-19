@@ -5,17 +5,39 @@ const stages = [
   { id: "sales", title: "Реализация" },
 ];
 const questions = [0, 1, 2];
+const fortuneColors = [
+  "#f3e3bf",
+  "#dff4ff",
+  "#dfc285",
+  "#f6c2b7",
+  "#cfe9c8",
+  "#f7d7a8",
+  "#cfd9ff",
+  "#ffe8a3",
+  "#d7f0df",
+  "#f1c6df",
+  "#c9edf0",
+  "#ead8b6",
+];
+const defaultFortuneRules = Array.from({ length: 12 }, (_, index) => String(index + 1));
 
+let nextFortuneRuleId = 0;
 let scores = createEmptyScores();
 let teamModifiers = Object.fromEntries(teams.map((team) => [team, 0]));
+let fortuneRuleBank = defaultFortuneRules.map(createFortuneRule);
+let fortuneRules = [...fortuneRuleBank];
+let fortuneHistory = [];
 let selectedCell = null;
 let selectedTeam = null;
 let activeView = "all";
+let activeScreen = "scoreboard";
 
 let timerDuration = 30;
 let timerLeft = timerDuration;
 let timerId = null;
 let activeTimerButton = null;
+let wheelRotation = 0;
+let isWheelSpinning = false;
 
 const headNode = document.querySelector("#scoreHead");
 const rowsNode = document.querySelector("#scoreRows");
@@ -34,6 +56,27 @@ const viewButtons = document.querySelectorAll("[data-view]");
 const viewMenu = document.querySelector(".view-menu");
 const menuTrigger = document.querySelector(".menu-trigger");
 const tableWrap = document.querySelector(".table-wrap");
+const fortuneOpenButton = document.querySelector("#fortuneOpen");
+const fortuneBackButton = document.querySelector("#fortuneBack");
+const fortuneScreen = document.querySelector("#fortuneScreen");
+const fortuneWheel = document.querySelector("#fortuneWheel");
+const fortuneSpinButton = document.querySelector("#fortuneSpin");
+const fortuneResultNode = document.querySelector("#fortuneResult");
+const fortuneRulesNode = document.querySelector("#fortuneRules");
+const fortuneRulesOpenButton = document.querySelector("#fortuneRulesOpen");
+const fortuneRulesModal = document.querySelector("#fortuneRulesModal");
+const fortuneRulesCloseButton = document.querySelector("#fortuneRulesClose");
+const fortuneRulesDoneButton = document.querySelector("#fortuneRulesDone");
+const fortuneRuleAddButton = document.querySelector("#fortuneRuleAdd");
+const fortuneResetButton = document.querySelector("#fortuneReset");
+const fortuneHistoryNode = document.querySelector("#fortuneHistory");
+const timerCard = document.querySelector(".timer-card");
+const scoreBoard = document.querySelector(".score-board");
+
+function createFortuneRule(text) {
+  nextFortuneRuleId += 1;
+  return { id: nextFortuneRuleId, text };
+}
 
 function createEmptyScores() {
   return Object.fromEntries(
@@ -54,6 +97,18 @@ function gameTotal(team) {
 
 function applyTeamModifier(team, points) {
   return Math.max(0, points + teamModifiers[team]);
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (char) => (
+    {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "\"": "&quot;",
+      "'": "&#39;",
+    }[char]
+  ));
 }
 
 function renderStageScoreCell(team, stage, questionIndex) {
@@ -234,6 +289,141 @@ function render() {
   viewButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.view === activeView);
   });
+  fortuneOpenButton.classList.toggle("active", activeScreen === "fortune");
+}
+
+function renderFortuneWheel() {
+  if (!fortuneRules.length) {
+    fortuneWheel.style.background = "rgba(255, 247, 223, 0.38)";
+    fortuneWheel.innerHTML = "";
+    fortuneSpinButton.disabled = true;
+    renderFortuneRuleEditor();
+    return;
+  }
+
+  const sliceSize = 360 / fortuneRules.length;
+  const gradient = fortuneRules
+    .map((_, index) => {
+      const start = index * sliceSize;
+      const end = (index + 1) * sliceSize;
+      return `${fortuneColors[index % fortuneColors.length]} ${start}deg ${end}deg`;
+    })
+    .join(", ");
+
+  fortuneWheel.style.background = `conic-gradient(from -90deg, ${gradient})`;
+  fortuneWheel.innerHTML = fortuneRules
+    .map((rule, index) => {
+      const angle = index * sliceSize + sliceSize / 2;
+      return `
+        <span class="fortune-label" style="--angle: ${angle}deg" title="${escapeHtml(rule.text)}">
+          <span class="fortune-label-text">${escapeHtml(rule.text)}</span>
+        </span>
+      `;
+    })
+    .join("");
+
+  renderFortuneRuleEditor();
+  fortuneSpinButton.disabled = isWheelSpinning;
+}
+
+function renderFortuneRuleEditor() {
+  if (!fortuneRuleBank.length) {
+    fortuneRulesNode.innerHTML = `<div class="fortune-rules-empty">Правил пока нет</div>`;
+    return;
+  }
+
+  fortuneRulesNode.innerHTML = fortuneRuleBank
+    .map(
+      (rule, index) => `
+        <div class="fortune-rule-row">
+          <span class="fortune-rule-number">${index + 1}</span>
+          <input class="fortune-rule-input" data-rule-id="${rule.id}" value="${escapeHtml(rule.text)}">
+          <button class="fortune-rule-delete" data-delete-rule="${rule.id}" type="button" aria-label="Удалить правило">×</button>
+        </div>
+      `,
+    )
+    .join("");
+}
+
+function renderFortuneHistory() {
+  fortuneHistoryNode.innerHTML = fortuneHistory
+    .map((item, index) => `<li><span>${index + 1}</span>${escapeHtml(item)}</li>`)
+    .join("");
+}
+
+function showFortuneScreen() {
+  activeScreen = "fortune";
+  hidePopover();
+  timerCard.hidden = true;
+  scoreBoard.hidden = true;
+  fortuneScreen.hidden = false;
+  render();
+  closeViewMenu();
+}
+
+function showScoreboardScreen() {
+  activeScreen = "scoreboard";
+  hideFortuneRulesModal();
+  fortuneScreen.hidden = true;
+  timerCard.hidden = false;
+  scoreBoard.hidden = false;
+  render();
+  closeViewMenu();
+}
+
+function showFortuneRulesModal() {
+  fortuneRulesModal.hidden = false;
+  const firstInput = fortuneRulesModal.querySelector(".fortune-rule-input");
+  if (firstInput) firstInput.focus();
+}
+
+function hideFortuneRulesModal() {
+  fortuneRulesModal.hidden = true;
+}
+
+function spinFortuneWheel() {
+  if (isWheelSpinning || !fortuneRules.length) return;
+
+  isWheelSpinning = true;
+  fortuneSpinButton.disabled = true;
+  fortuneResultNode.textContent = "Колесо крутится...";
+
+  const targetIndex = Math.floor(Math.random() * fortuneRules.length);
+  const sliceSize = 360 / fortuneRules.length;
+  const currentNormalized = ((wheelRotation % 360) + 360) % 360;
+  const targetNormalized = (360 - targetIndex * sliceSize - sliceSize / 2 + 360) % 360;
+  const extraTurns = 5 * 360;
+  const travel = (targetNormalized - currentNormalized + 360) % 360;
+  wheelRotation += extraTurns + travel;
+  fortuneWheel.style.transform = `rotate(${wheelRotation}deg)`;
+
+  window.setTimeout(() => {
+    const selectedRule = fortuneRules[targetIndex];
+    isWheelSpinning = false;
+    fortuneResultNode.textContent = selectedRule.text;
+    fortuneHistory.push(selectedRule.text);
+    fortuneRules.splice(targetIndex, 1);
+    renderFortuneWheel();
+    renderFortuneHistory();
+    if (!fortuneRules.length) {
+      fortuneResultNode.textContent = `${selectedRule.text} — правила закончились`;
+    }
+  }, 4700);
+}
+
+function resetFortuneSpins() {
+  if (isWheelSpinning) return;
+
+  fortuneRules = [...fortuneRuleBank];
+  fortuneHistory = [];
+  wheelRotation = 0;
+  fortuneWheel.style.transition = "none";
+  fortuneWheel.style.transform = "rotate(0deg)";
+  fortuneWheel.offsetHeight;
+  fortuneWheel.style.transition = "";
+  fortuneResultNode.textContent = fortuneRules.length ? "Готово к прокрутке" : "Добавьте правила";
+  renderFortuneWheel();
+  renderFortuneHistory();
 }
 
 function showPopover(button) {
@@ -331,6 +521,7 @@ function renderTimer() {
   const minutes = String(Math.floor(timerLeft / 60)).padStart(2, "0");
   const seconds = String(timerLeft % 60).padStart(2, "0");
   timerDisplayNode.textContent = `${minutes}:${seconds}`;
+  timerCard.classList.toggle("warning", Boolean(timerId) && timerLeft <= 10 && timerLeft > 0);
 
   timerButtons.forEach((button) => {
     const isActive = button === activeTimerButton;
@@ -471,7 +662,9 @@ document.addEventListener("click", (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") hidePopover();
+  if (event.key !== "Escape") return;
+  hidePopover();
+  hideFortuneRulesModal();
 });
 
 timerButtons.forEach((button) => {
@@ -493,12 +686,73 @@ viewButtons.forEach((button) => {
   button.addEventListener("click", () => {
     activeView = button.dataset.view;
     hidePopover();
+    if (activeScreen === "fortune") {
+      showScoreboardScreen();
+      return;
+    }
     render();
     closeViewMenu();
   });
 });
 
 menuTrigger.addEventListener("click", () => viewMenu.classList.toggle("pinned"));
+
+fortuneOpenButton.addEventListener("click", showFortuneScreen);
+fortuneBackButton.addEventListener("click", showScoreboardScreen);
+fortuneSpinButton.addEventListener("click", spinFortuneWheel);
+fortuneRulesOpenButton.addEventListener("click", showFortuneRulesModal);
+fortuneRulesCloseButton.addEventListener("click", hideFortuneRulesModal);
+fortuneRulesDoneButton.addEventListener("click", hideFortuneRulesModal);
+fortuneResetButton.addEventListener("click", resetFortuneSpins);
+fortuneRuleAddButton.addEventListener("click", () => {
+  if (isWheelSpinning) return;
+
+  const rule = createFortuneRule("Новое правило");
+  fortuneRuleBank.push(rule);
+  fortuneRules.push(rule);
+  renderFortuneWheel();
+  const inputs = fortuneRulesNode.querySelectorAll(".fortune-rule-input");
+  const lastInput = inputs[inputs.length - 1];
+  if (lastInput) {
+    lastInput.focus();
+    lastInput.select();
+  }
+});
+
+fortuneRulesModal.addEventListener("click", (event) => {
+  if (event.target === fortuneRulesModal) hideFortuneRulesModal();
+});
+
+fortuneRulesNode.addEventListener("click", (event) => {
+  const deleteButton = event.target.closest("[data-delete-rule]");
+  if (!deleteButton) return;
+  if (isWheelSpinning) return;
+
+  const ruleId = Number(deleteButton.dataset.deleteRule);
+  fortuneRuleBank = fortuneRuleBank.filter((rule) => rule.id !== ruleId);
+  fortuneRules = fortuneRules.filter((rule) => rule.id !== ruleId);
+  fortuneResultNode.textContent = fortuneRules.length ? fortuneResultNode.textContent : "Добавьте правила";
+  renderFortuneWheel();
+});
+
+fortuneRulesNode.addEventListener("input", (event) => {
+  const input = event.target.closest("[data-rule-id]");
+  if (!input) return;
+  if (isWheelSpinning) return;
+
+  const ruleId = Number(input.dataset.ruleId);
+  const rule = fortuneRuleBank.find((item) => item.id === ruleId);
+  if (!rule) return;
+
+  rule.text = input.value || "Пустое правило";
+  const activeIndex = fortuneRules.findIndex((item) => item.id === ruleId);
+  const label = fortuneWheel.querySelectorAll(".fortune-label")[activeIndex];
+  if (label) {
+    label.title = rule.text;
+    const labelText = label.querySelector(".fortune-label-text");
+    if (labelText) labelText.textContent = rule.text;
+  }
+});
 
 tableWrap.addEventListener(
   "wheel",
@@ -521,4 +775,6 @@ tableWrap.addEventListener(
 );
 
 render();
+renderFortuneWheel();
+renderFortuneHistory();
 renderTimer();
