@@ -501,15 +501,19 @@ button {
   stroke-width: 0.18;
 }
 
-.fortune-label-text {
-  fill: var(--ink);
+.fortune-label-box {
+  width: 100%;
+  height: 100%;
+  color: var(--ink);
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 4.2px;
+  font-size: 4px;
   font-weight: 700;
-  paint-order: stroke;
-  stroke: rgba(255, 255, 255, 0.42);
-  stroke-width: 0.45px;
-  stroke-linejoin: round;
+  line-height: 7.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+  text-shadow: 0 0.18px 0 rgba(255, 255, 255, 0.58);
 }
 
 .fortune-inner-ring {
@@ -1157,7 +1161,7 @@ button {
     width: min(92vw, 520px);
   }
 
-  .fortune-label-text {
+  .fortune-label-box {
     font-size: 3.8px;
   }
 

@@ -306,17 +306,19 @@ function renderFortuneWheel() {
       const startAngle = -90 + index * sliceSize;
       const endAngle = startAngle + sliceSize;
       const labelAngle = startAngle + sliceSize / 2;
-      const labelPoint = polarPoint(50, 50, 35, labelAngle);
+      const labelStart = polarPoint(50, 50, 45, labelAngle);
       return `
         <g class="fortune-slice">
           <path d="${fortuneSlicePath(50, 50, 50, startAngle, endAngle)}" fill="${fortuneColors[index % fortuneColors.length]}"></path>
-          <text
-            x="${labelPoint.x}"
-            y="${labelPoint.y}"
-            class="fortune-label-text"
-            text-anchor="middle"
-            dominant-baseline="middle"
-          >${escapeHtml(truncateFortuneLabel(rule.text))}</text>
+          <foreignObject
+            x="${labelStart.x}"
+            y="${labelStart.y - 3.6}"
+            width="25"
+            height="7.2"
+            transform="rotate(${labelAngle + 180} ${labelStart.x} ${labelStart.y})"
+          >
+            <div xmlns="http://www.w3.org/1999/xhtml" class="fortune-label-box">${escapeHtml(rule.text)}</div>
+          </foreignObject>
         </g>
       `;
     })
@@ -345,11 +347,6 @@ function fortuneSlicePath(cx, cy, radius, startAngle, endAngle) {
   const end = polarPoint(cx, cy, radius, endAngle);
   const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0;
   return `M ${cx} ${cy} L ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${end.x} ${end.y} Z`;
-}
-
-function truncateFortuneLabel(text) {
-  const value = String(text);
-  return value.length > 12 ? `${value.slice(0, 11)}…` : value;
 }
 
 function renderFortuneRuleEditor() {
