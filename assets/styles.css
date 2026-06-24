@@ -385,10 +385,9 @@ button {
   font-weight: 700;
 }
 
-.fortune-history {
+.fortune-panel {
   position: fixed;
   top: 92px;
-  right: 14px;
   z-index: 70;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -403,6 +402,16 @@ button {
   backdrop-filter: blur(14px) saturate(1.15);
   box-shadow: 0 6px 16px var(--shadow);
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.58);
+}
+
+.fortune-panel-left {
+  left: 14px;
+  top: 238px;
+  max-height: calc(100vh - 258px);
+}
+
+.fortune-panel-right {
+  right: 14px;
 }
 
 .fortune-history-title {
@@ -435,10 +444,12 @@ button {
   padding: 9px 10px;
   border: 0.5px solid rgba(255, 255, 255, 0.24);
   border-radius: 10px;
+  color: #fff5ea;
   background: rgba(255, 247, 223, 0.14);
   font-size: 15px;
   font-weight: 700;
   line-height: 1.15;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.72);
 }
 
 .fortune-history-list li span {
@@ -451,6 +462,17 @@ button {
   background: #fff7df;
   text-shadow: none;
   font-size: 13px;
+}
+
+.fortune-rule-bank-list li.drawn {
+  opacity: 0.54;
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.fortune-rule-bank-list li.drawn span {
+  color: #fff5ea;
+  background: linear-gradient(#a93b31, var(--red));
 }
 
 .fortune-layout {
@@ -1179,7 +1201,10 @@ button {
     top: 184px;
   }
 
-  .fortune-history {
+}
+
+@media (max-width: 560px) {
+  .fortune-panel {
     position: static;
     width: min(92vw, 520px);
     max-height: none;

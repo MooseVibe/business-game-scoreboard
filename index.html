@@ -45,7 +45,11 @@
         <button class="fortune-back" id="fortuneBack" type="button">‹ Вернуться к таблице</button>
         <button class="fortune-rules-open" id="fortuneRulesOpen" type="button">Правила</button>
         <button class="fortune-reset" id="fortuneReset" type="button">Сбросить прокруты</button>
-        <aside class="fortune-history" aria-label="История прокрутов">
+        <aside class="fortune-panel fortune-panel-left" aria-label="Все правила">
+          <div class="fortune-history-title">Правила</div>
+          <ol class="fortune-history-list fortune-rule-bank-list" id="fortuneRuleBankList"></ol>
+        </aside>
+        <aside class="fortune-panel fortune-panel-right" aria-label="История прокрутов">
           <div class="fortune-history-title">Прокруты</div>
           <ol class="fortune-history-list" id="fortuneHistory"></ol>
         </aside>

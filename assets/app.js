@@ -79,6 +79,7 @@ const fortuneRulesDoneButton = document.querySelector("#fortuneRulesDone");
 const fortuneRuleAddButton = document.querySelector("#fortuneRuleAdd");
 const fortuneResetButton = document.querySelector("#fortuneReset");
 const fortuneHistoryNode = document.querySelector("#fortuneHistory");
+const fortuneRuleBankListNode = document.querySelector("#fortuneRuleBankList");
 const timerCard = document.querySelector(".timer-card");
 const scoreBoard = document.querySelector(".score-board");
 
@@ -320,6 +321,7 @@ function renderFortuneWheel() {
         <g class="fortune-slice">
           <path d="${fortuneSlicePath(50, 50, 50, startAngle, endAngle)}" fill="${fortuneColors[index % fortuneColors.length]}"></path>
           <foreignObject
+            data-rule-id="${rule.id}"
             x="${labelStart.x}"
             y="${labelStart.y - 3.6}"
             width="25"
@@ -379,7 +381,17 @@ function renderFortuneRuleEditor() {
 
 function renderFortuneHistory() {
   fortuneHistoryNode.innerHTML = fortuneHistory
-    .map((item, index) => `<li><span>${index + 1}</span>${escapeHtml(item)}</li>`)
+    .map((item, index) => `<li><span>${index + 1}</span>${escapeHtml(item.text)}</li>`)
+    .join("");
+}
+
+function renderFortuneRuleBankList() {
+  const drawnRuleIds = new Set(fortuneHistory.map((rule) => rule.id));
+  fortuneRuleBankListNode.innerHTML = fortuneRuleBank
+    .map((rule, index) => {
+      const drawnClass = drawnRuleIds.has(rule.id) ? " drawn" : "";
+      return `<li class="${drawnClass}"><span>${index + 1}</span>${escapeHtml(rule.text)}</li>`;
+    })
     .join("");
 }
 
@@ -389,6 +401,7 @@ function showFortuneScreen() {
   timerCard.hidden = true;
   scoreBoard.hidden = true;
   fortuneScreen.hidden = false;
+  renderFortuneRuleBankList();
   render();
   closeViewMenu();
 }
@@ -433,10 +446,11 @@ function spinFortuneWheel() {
     const selectedRule = fortuneRules[targetIndex];
     isWheelSpinning = false;
     fortuneResultNode.textContent = selectedRule.text;
-    fortuneHistory.push(selectedRule.text);
+    fortuneHistory.push({ id: selectedRule.id, text: selectedRule.text });
     fortuneRules.splice(targetIndex, 1);
     renderFortuneWheel();
     renderFortuneHistory();
+    renderFortuneRuleBankList();
     if (!fortuneRules.length) {
       fortuneResultNode.textContent = `${selectedRule.text} — правила закончились`;
     }
@@ -456,6 +470,7 @@ function resetFortuneSpins() {
   fortuneResultNode.textContent = fortuneRules.length ? "Готово к прокрутке" : "Добавьте правила";
   renderFortuneWheel();
   renderFortuneHistory();
+  renderFortuneRuleBankList();
 }
 
 function showPopover(button) {
@@ -743,6 +758,7 @@ fortuneRuleAddButton.addEventListener("click", () => {
   fortuneRuleBank.push(rule);
   fortuneRules.push(rule);
   renderFortuneWheel();
+  renderFortuneRuleBankList();
   const inputs = fortuneRulesNode.querySelectorAll(".fortune-rule-input");
   const lastInput = inputs[inputs.length - 1];
   if (lastInput) {
@@ -763,8 +779,11 @@ fortuneRulesNode.addEventListener("click", (event) => {
   const ruleId = Number(deleteButton.dataset.deleteRule);
   fortuneRuleBank = fortuneRuleBank.filter((rule) => rule.id !== ruleId);
   fortuneRules = fortuneRules.filter((rule) => rule.id !== ruleId);
+  fortuneHistory = fortuneHistory.filter((rule) => rule.id !== ruleId);
   fortuneResultNode.textContent = fortuneRules.length ? fortuneResultNode.textContent : "Добавьте правила";
   renderFortuneWheel();
+  renderFortuneHistory();
+  renderFortuneRuleBankList();
 });
 
 fortuneRulesNode.addEventListener("input", (event) => {
@@ -777,13 +796,16 @@ fortuneRulesNode.addEventListener("input", (event) => {
   if (!rule) return;
 
   rule.text = input.value || "Пустое правило";
+  fortuneHistory.forEach((item) => {
+    if (item.id === ruleId) item.text = rule.text;
+  });
   const activeIndex = fortuneRules.findIndex((item) => item.id === ruleId);
-  const label = fortuneWheel.querySelectorAll(".fortune-label")[activeIndex];
+  const label = activeIndex >= 0 ? fortuneWheel.querySelector(`[data-rule-id="${ruleId}"] .fortune-label-box`) : null;
   if (label) {
-    label.title = rule.text;
-    const labelText = label.querySelector(".fortune-label-text");
-    if (labelText) labelText.textContent = rule.text;
+    label.textContent = rule.text;
   }
+  renderFortuneHistory();
+  renderFortuneRuleBankList();
 });
 
 tableWrap.addEventListener(
@@ -809,4 +831,5 @@ tableWrap.addEventListener(
 render();
 renderFortuneWheel();
 renderFortuneHistory();
+renderFortuneRuleBankList();
 renderTimer();
