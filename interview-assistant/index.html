@@ -727,8 +727,10 @@
         <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M28 16C28 16.2652 27.8946 16.5196 27.7071 16.7071C27.5196 16.8946 27.2652 17 27 17H5C4.73478 17 4.48043 16.8946 4.29289 16.7071C4.10536 16.5196 4 16.2652 4 16C4 15.7348 4.10536 15.4804 4.29289 15.2929C4.48043 15.1054 4.73478 15 5 15H27C27.2652 15 27.5196 15.1054 27.7071 15.2929C27.8946 15.4804 28 15.7348 28 16ZM5 9H27C27.2652 9 27.5196 8.89464 27.7071 8.70711C27.8946 8.51957 28 8.26522 28 8C28 7.73478 27.8946 7.48043 27.7071 7.29289C27.5196 7.10536 27.2652 7 27 7H5C4.73478 7 4.48043 7.10536 4.29289 7.29289C4.10536 7.48043 4 7.73478 4 8C4 8.26522 4.10536 8.51957 4.29289 8.70711C4.48043 8.89464 4.73478 9 5 9ZM27 23H5C4.73478 23 4.48043 23.1054 4.29289 23.2929C4.10536 23.4804 4 23.7348 4 24C4 24.2652 4.10536 24.5196 4.29289 24.7071C4.48043 24.8946 4.73478 25 5 25H27C27.2652 25 27.5196 24.8946 27.7071 24.7071C27.8946 24.5196 28 24.2652 28 24C28 23.7348 27.8946 23.4804 27.7071 23.2929C27.5196 23.1054 27.2652 23 27 23Z" fill="#E0CBCB"/></svg>
       </button>
       <div class="menu" id="menu">
+        <button id="importJson" type="button">Загрузить JSON</button>
         <button id="exportJson">Выгрузить JSON</button>
         <button id="exportCsv">Выгрузить CSV</button>
+        <input id="importJsonInput" type="file" accept="application/json,.json" hidden>
       </div>
     </div>
   </header>
@@ -741,6 +743,9 @@
 
   <script>
     const STORAGE_KEY = 'iq-provision-interview-assistant-v4';
+    const SUPABASE_URL = '';
+    const SUPABASE_ANON_KEY = '';
+    const REMOTE_SAVE_DELAY = 900;
     const cardCaret = '<svg class="card-caret" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M16.6923 7.94205L10.4423 14.192C10.3842 14.2502 10.3153 14.2963 10.2394 14.3277C10.1636 14.3592 10.0822 14.3754 10.0001 14.3754C9.91797 14.3754 9.83664 14.3592 9.76077 14.3277C9.68489 14.2963 9.61596 14.2502 9.55792 14.192L3.30792 7.94205C3.19064 7.82477 3.12476 7.66571 3.12476 7.49986C3.12476 7.33401 3.19064 7.17495 3.30792 7.05767C3.42519 6.9404 3.58425 6.87451 3.7501 6.87451C3.91596 6.87451 4.07502 6.9404 4.19229 7.05767L10.0001 12.8663L15.8079 7.05767C15.866 6.9996 15.9349 6.95354 16.0108 6.92211C16.0867 6.89069 16.168 6.87451 16.2501 6.87451C16.3322 6.87451 16.4135 6.89069 16.4894 6.92211C16.5653 6.95354 16.6342 6.9996 16.6923 7.05767C16.7504 7.11574 16.7964 7.18468 16.8278 7.26055C16.8593 7.33642 16.8755 7.41774 16.8755 7.49986C16.8755 7.58198 16.8593 7.6633 16.8278 7.73917C16.7964 7.81504 16.7504 7.88398 16.6923 7.94205Z" fill="white" fill-opacity="0.5"/></svg>';
     const comboCaret = '<svg class="combo-caret" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M16.6923 7.94205L10.4423 14.192C10.3842 14.2502 10.3153 14.2963 10.2394 14.3277C10.1636 14.3592 10.0822 14.3754 10.0001 14.3754C9.91797 14.3754 9.83664 14.3592 9.76077 14.3277C9.68489 14.2963 9.61596 14.2502 9.55792 14.192L3.30792 7.94205C3.19064 7.82477 3.12476 7.66571 3.12476 7.49986C3.12476 7.33401 3.19064 7.17495 3.30792 7.05767C3.42519 6.9404 3.58425 6.87451 3.7501 6.87451C3.91596 6.87451 4.07502 6.9404 4.19229 7.05767L10.0001 12.8663L15.8079 7.05767C15.866 6.9996 15.9349 6.95354 16.0108 6.92211C16.0867 6.89069 16.168 6.87451 16.2501 6.87451C16.3322 6.87451 16.4135 6.89069 16.4894 6.92211C16.5653 6.95354 16.6342 6.9996 16.6923 7.05767C16.7504 7.11574 16.7964 7.18468 16.8278 7.26055C16.8593 7.33642 16.8755 7.41774 16.8755 7.49986C16.8755 7.58198 16.8593 7.6633 16.8278 7.73917C16.7964 7.81504 16.7504 7.88398 16.6923 7.94205Z" fill="white" fill-opacity="0.5"/></svg>';
     const emotions = {
@@ -804,9 +809,13 @@
       ]
     ];
     const state = load();
+    const remoteSession = getRemoteSession();
+    let remoteSaveTimer = null;
+    let isApplyingRemoteState = false;
 
     render();
     bindMenu();
+    initRemoteSync();
 
     function load() {
       try {
@@ -879,6 +888,72 @@
 
     function save() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      scheduleRemoteSave();
+    }
+
+    function getRemoteSession() {
+      if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
+      const params = new URLSearchParams(window.location.hash.slice(1));
+      const sessionId = params.get('session');
+      const accessKey = params.get('key');
+      if (!sessionId || !accessKey) return null;
+      return { sessionId, accessKey };
+    }
+
+    async function initRemoteSync() {
+      if (!remoteSession) return;
+      try {
+        const remoteState = await callSupabaseRpc('get_interview_state', {
+          p_session_id: remoteSession.sessionId,
+          p_access_key: remoteSession.accessKey
+        });
+        if (remoteState?.interviews?.length) {
+          isApplyingRemoteState = true;
+          state.interviews = normalizeImportedInterviews(remoteState);
+          state.currentId = state.interviews[0].id;
+          resetViewState();
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          isApplyingRemoteState = false;
+          render();
+        } else {
+          saveRemoteNow();
+        }
+      } catch {
+        isApplyingRemoteState = false;
+      }
+    }
+
+    function scheduleRemoteSave() {
+      if (!remoteSession || isApplyingRemoteState) return;
+      window.clearTimeout(remoteSaveTimer);
+      remoteSaveTimer = window.setTimeout(saveRemoteNow, REMOTE_SAVE_DELAY);
+    }
+
+    async function saveRemoteNow() {
+      if (!remoteSession) return;
+      try {
+        await callSupabaseRpc('save_interview_state', {
+          p_session_id: remoteSession.sessionId,
+          p_access_key: remoteSession.accessKey,
+          p_state: exportData()
+        });
+      } catch {
+      }
+    }
+
+    async function callSupabaseRpc(name, body) {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
+        method: 'POST',
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+      if (!response.ok) throw new Error('Supabase request failed');
+      if (response.status === 204) return null;
+      return response.json();
     }
 
     function render() {
@@ -1276,6 +1351,8 @@
 
     function bindMenu() {
       document.getElementById('menuButton').addEventListener('click', () => document.getElementById('menu').classList.toggle('open'));
+      document.getElementById('importJson').addEventListener('click', () => document.getElementById('importJsonInput').click());
+      document.getElementById('importJsonInput').addEventListener('change', importJson);
       document.getElementById('exportJson').addEventListener('click', () => download('interview.json', JSON.stringify(exportData(), null, 2), 'application/json'));
       document.getElementById('exportCsv').addEventListener('click', exportCsv);
       document.addEventListener('click', event => {
@@ -1283,6 +1360,56 @@
         if (!event.target.closest('.combo')) closeCombos();
         if (!event.target.closest('.suggest')) closeSuggests();
       });
+    }
+
+    function importJson(event) {
+      const file = event.target.files?.[0];
+      event.target.value = '';
+      if (!file) return;
+      const reader = new FileReader();
+      reader.addEventListener('load', () => {
+        try {
+          const imported = JSON.parse(reader.result);
+          const interviews = normalizeImportedInterviews(imported);
+          state.interviews = interviews;
+          state.currentId = interviews[0].id;
+          resetViewState();
+          save();
+          document.getElementById('menu').classList.remove('open');
+          render();
+        } catch {
+          alert('Не удалось загрузить JSON. Проверь, что это экспорт из ассистента интервьюера.');
+        }
+      });
+      reader.readAsText(file);
+    }
+
+    function normalizeImportedInterviews(imported) {
+      const source = Array.isArray(imported?.interviews) ? imported.interviews : [];
+      if (!source.length) throw new Error('No interviews');
+      return source.map((interview, index) => {
+        const id = interview.id || makeId();
+        const notes = {};
+        blocks.forEach((_, blockIndex) => {
+          const rows = Array.isArray(interview.notes?.[blockIndex]) ? interview.notes[blockIndex] : [];
+          notes[blockIndex] = rows.length ? rows.map(normalizeImportedRow) : [{ quote: '', emotion: '' }];
+        });
+        return {
+          id,
+          respondent: interview.respondent || {},
+          notes,
+          saved: true,
+          createdAt: interview.createdAt || new Date().toISOString(),
+          updatedAt: interview.updatedAt || interview.createdAt || new Date().toISOString()
+        };
+      });
+    }
+
+    function normalizeImportedRow(row) {
+      return {
+        quote: row?.quote || '',
+        emotion: emotions[row?.emotion] ? row.emotion : ''
+      };
     }
 
     function exportData() {
