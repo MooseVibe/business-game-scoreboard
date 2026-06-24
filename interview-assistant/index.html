@@ -746,6 +746,7 @@
     const SUPABASE_URL = '';
     const SUPABASE_ANON_KEY = '';
     const REMOTE_SAVE_DELAY = 900;
+    const EXPORT_COUNTER_KEY = 'iq-provision-interview-export-counters-v1';
     const cardCaret = '<svg class="card-caret" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M16.6923 7.94205L10.4423 14.192C10.3842 14.2502 10.3153 14.2963 10.2394 14.3277C10.1636 14.3592 10.0822 14.3754 10.0001 14.3754C9.91797 14.3754 9.83664 14.3592 9.76077 14.3277C9.68489 14.2963 9.61596 14.2502 9.55792 14.192L3.30792 7.94205C3.19064 7.82477 3.12476 7.66571 3.12476 7.49986C3.12476 7.33401 3.19064 7.17495 3.30792 7.05767C3.42519 6.9404 3.58425 6.87451 3.7501 6.87451C3.91596 6.87451 4.07502 6.9404 4.19229 7.05767L10.0001 12.8663L15.8079 7.05767C15.866 6.9996 15.9349 6.95354 16.0108 6.92211C16.0867 6.89069 16.168 6.87451 16.2501 6.87451C16.3322 6.87451 16.4135 6.89069 16.4894 6.92211C16.5653 6.95354 16.6342 6.9996 16.6923 7.05767C16.7504 7.11574 16.7964 7.18468 16.8278 7.26055C16.8593 7.33642 16.8755 7.41774 16.8755 7.49986C16.8755 7.58198 16.8593 7.6633 16.8278 7.73917C16.7964 7.81504 16.7504 7.88398 16.6923 7.94205Z" fill="white" fill-opacity="0.5"/></svg>';
     const comboCaret = '<svg class="combo-caret" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="M16.6923 7.94205L10.4423 14.192C10.3842 14.2502 10.3153 14.2963 10.2394 14.3277C10.1636 14.3592 10.0822 14.3754 10.0001 14.3754C9.91797 14.3754 9.83664 14.3592 9.76077 14.3277C9.68489 14.2963 9.61596 14.2502 9.55792 14.192L3.30792 7.94205C3.19064 7.82477 3.12476 7.66571 3.12476 7.49986C3.12476 7.33401 3.19064 7.17495 3.30792 7.05767C3.42519 6.9404 3.58425 6.87451 3.7501 6.87451C3.91596 6.87451 4.07502 6.9404 4.19229 7.05767L10.0001 12.8663L15.8079 7.05767C15.866 6.9996 15.9349 6.95354 16.0108 6.92211C16.0867 6.89069 16.168 6.87451 16.2501 6.87451C16.3322 6.87451 16.4135 6.89069 16.4894 6.92211C16.5653 6.95354 16.6342 6.9996 16.6923 7.05767C16.7504 7.11574 16.7964 7.18468 16.8278 7.26055C16.8593 7.33642 16.8755 7.41774 16.8755 7.49986C16.8755 7.58198 16.8593 7.6633 16.8278 7.73917C16.7964 7.81504 16.7504 7.88398 16.6923 7.94205Z" fill="white" fill-opacity="0.5"/></svg>';
     const emotions = {
@@ -1114,6 +1115,7 @@
       body.style.maxHeight = '0px';
       body.style.paddingBottom = '0px';
       body.offsetHeight;
+      body.querySelectorAll('[data-quote]').forEach(autoGrow);
       body.style.maxHeight = `${body.scrollHeight}px`;
       body.style.paddingBottom = '20px';
       scrollCardIntoView(card, body);
@@ -1127,21 +1129,19 @@
 
     function scrollCardIntoView(card, body) {
       if (!card.dataset.card?.startsWith('block-')) return;
-      window.setTimeout(() => {
-        const rect = card.getBoundingClientRect();
-        const topOffset = 88;
-        const bottomOffset = 40;
-        const expandedBottom = rect.top + card.querySelector('summary').offsetHeight + body.scrollHeight + 20;
-        let nextTop = window.scrollY;
-        if (rect.top < topOffset) {
-          nextTop += rect.top - topOffset;
-        } else if (expandedBottom > window.innerHeight - bottomOffset) {
-          nextTop += expandedBottom - window.innerHeight + bottomOffset;
-        }
-        if (nextTop !== window.scrollY) {
-          window.scrollTo({ top: nextTop, behavior: 'smooth' });
-        }
-      }, 80);
+      const rect = card.getBoundingClientRect();
+      const topOffset = 88;
+      const bottomOffset = 40;
+      const expandedBottom = rect.top + card.querySelector('summary').offsetHeight + body.scrollHeight + 20;
+      let nextTop = window.scrollY;
+      if (rect.top < topOffset) {
+        nextTop += rect.top - topOffset;
+      } else if (expandedBottom > window.innerHeight - bottomOffset) {
+        nextTop += expandedBottom - window.innerHeight + bottomOffset;
+      }
+      if (nextTop !== window.scrollY) {
+        window.scrollTo({ top: nextTop });
+      }
     }
 
     function closeOtherQuestionCards(activeCard) {
@@ -1353,7 +1353,7 @@
       document.getElementById('menuButton').addEventListener('click', () => document.getElementById('menu').classList.toggle('open'));
       document.getElementById('importJson').addEventListener('click', () => document.getElementById('importJsonInput').click());
       document.getElementById('importJsonInput').addEventListener('change', importJson);
-      document.getElementById('exportJson').addEventListener('click', () => download('interview.json', JSON.stringify(exportData(), null, 2), 'application/json'));
+      document.getElementById('exportJson').addEventListener('click', () => download(jsonExportFileName(), JSON.stringify(exportData(), null, 2), 'application/json'));
       document.getElementById('exportCsv').addEventListener('click', exportCsv);
       document.addEventListener('click', event => {
         if (!event.target.closest('.menu-wrap')) document.getElementById('menu').classList.remove('open');
@@ -1577,6 +1577,32 @@
 
     function makeId() {
       return `i${Date.now()}${Math.random().toString(16).slice(2)}`;
+    }
+
+    function jsonExportFileName() {
+      const now = new Date();
+      const dateKey = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+      const exportIndex = nextJsonExportIndex(dateKey);
+      return `Список респондентов ${exportIndex} ${formatExportDate(now)}.json`;
+    }
+
+    function nextJsonExportIndex(dateKey) {
+      let counters = {};
+      try {
+        counters = JSON.parse(localStorage.getItem(EXPORT_COUNTER_KEY)) || {};
+      } catch {
+        counters = {};
+      }
+      counters[dateKey] = (Number(counters[dateKey]) || 0) + 1;
+      localStorage.setItem(EXPORT_COUNTER_KEY, JSON.stringify(counters));
+      return counters[dateKey];
+    }
+
+    function formatExportDate(date) {
+      const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+      const parts = [date.getDate(), months[date.getMonth()]];
+      if (date.getFullYear() !== new Date().getFullYear()) parts.push(date.getFullYear());
+      return parts.join(' ');
     }
 
     function download(name, content, type) {
