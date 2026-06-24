@@ -1,4 +1,16 @@
 const teams = ["Вода", "Воздух", "Земля", "Огонь"];
+const teamMarks = {
+  "Вода": "assets/elements/water.png",
+  "Воздух": "assets/elements/air.png",
+  "Земля": "assets/elements/earth.png",
+  "Огонь": "assets/elements/fire.png",
+};
+const teamMarkClasses = {
+  "Вода": "water",
+  "Воздух": "air",
+  "Земля": "earth",
+  "Огонь": "fire",
+};
 const stages = [
   { id: "production", title: "Производство" },
   { id: "marketing", title: "Маркетинг" },
@@ -38,7 +50,7 @@ let fortuneRules = [...fortuneRuleBank];
 let fortuneHistory = [];
 let selectedCell = null;
 let selectedTeam = null;
-let activeView = "all";
+let activeView = "production";
 let activeScreen = "scoreboard";
 
 let timerDuration = 30;
@@ -251,7 +263,7 @@ function renderRows() {
 
         return `
           <tr>
-            <th class="team-cell" scope="row"><button class="team-rule-button" data-team-rule="${team}" type="button">${team}${renderTeamModifier(team)}</button></th>
+            <th class="team-cell team-cell-${teamMarkClasses[team]}" scope="row"><button class="team-rule-button" data-team-rule="${team}" type="button" aria-label="${team} • правило начисления">${renderTeamMark(team)}<div class="team-name">${team}</div>${renderTeamModifier(team)}</button></th>
             ${questionCells}
             <td class="total-cell">${stageTotal(team, stage.id)}</td>
             <td class="game-total-cell">${gameTotal(team)}</td>
@@ -279,7 +291,7 @@ function renderRows() {
 
       return `
         <tr>
-          <th class="team-cell" scope="row"><button class="team-rule-button" data-team-rule="${team}" type="button">${team}${renderTeamModifier(team)}</button></th>
+          <th class="team-cell team-cell-${teamMarkClasses[team]}" scope="row"><button class="team-rule-button" data-team-rule="${team}" type="button" aria-label="${team} • правило начисления">${renderTeamMark(team)}<div class="team-name">${team}</div>${renderTeamModifier(team)}</button></th>
           ${stageCells}
           <td class="game-total-cell">${gameTotal(team)}</td>
         </tr>
@@ -291,6 +303,10 @@ function renderRows() {
 function renderTeamModifier(team) {
   const modifier = teamModifiers[team];
   return modifier ? `<span>${modifier}</span>` : "";
+}
+
+function renderTeamMark(team) {
+  return `<img class="team-mark" src="${teamMarks[team]}" alt="${team}">`;
 }
 
 function render() {
@@ -611,6 +627,10 @@ function resetActiveTimer() {
   renderTimer();
 }
 
+function isScorePopoverOpen() {
+  return !popoverNode.hidden;
+}
+
 rowsNode.addEventListener("click", (event) => {
   const teamButton = event.target.closest("[data-team-rule]");
   if (teamButton) {
@@ -621,6 +641,11 @@ rowsNode.addEventListener("click", (event) => {
 
   const customButton = event.target.closest("[data-custom-score]");
   if (customButton) {
+    if (isScorePopoverOpen()) {
+      hidePopover();
+      return;
+    }
+
     const cell = customButton.closest(".score-cell");
     showPopover(cell);
     customScoreInput.focus();
@@ -641,10 +666,20 @@ rowsNode.addEventListener("click", (event) => {
     return;
   }
 
-  if (activeView !== "all") return;
-
   const button = event.target.closest(".score-cell");
   if (!button) return;
+
+  if (activeView !== "all") {
+    if (isScorePopoverOpen()) {
+      hidePopover();
+    }
+    return;
+  }
+
+  if (isScorePopoverOpen()) {
+    hidePopover();
+    return;
+  }
 
   showPopover(button);
 });
