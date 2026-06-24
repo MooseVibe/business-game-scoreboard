@@ -406,17 +406,20 @@
     }
 
     .body {
-      display: grid;
-      gap: 12px;
       max-height: 0;
       overflow: hidden;
       padding: 0 24px;
-      transition: max-height .26s ease, padding-bottom .26s ease;
+      transition: max-height .26s ease;
     }
 
     details[open] .body {
       max-height: none;
       overflow: visible;
+    }
+
+    .body-inner {
+      display: grid;
+      gap: 12px;
       padding-bottom: 20px;
     }
 
@@ -692,6 +695,33 @@
 
     .add-row:hover { color: #fff; }
 
+    .drop-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      place-items: center;
+      background: rgba(20, 18, 18, .72);
+      backdrop-filter: blur(3px);
+      pointer-events: none;
+    }
+
+    body.dragging-json .drop-overlay {
+      display: grid;
+    }
+
+    .drop-box {
+      width: min(420px, calc(100vw - 32px));
+      border: 1px dashed rgba(255, 255, 255, .5);
+      border-radius: 16px;
+      background: var(--card);
+      padding: 28px;
+      color: rgba(255, 255, 255, .8);
+      font-size: 16px;
+      line-height: 22px;
+      text-align: center;
+    }
+
     @media (max-width: 1340px) {
       .question-helper {
         display: none;
@@ -739,6 +769,9 @@
     <aside class="interviews" id="interviews"></aside>
     <main id="cards"></main>
     <aside class="question-helper" id="questionHelper" aria-live="polite"></aside>
+  </div>
+  <div class="drop-overlay" id="dropOverlay">
+    <div class="drop-box">Отпусти JSON со списком респондентов, чтобы загрузить его в ассистент</div>
   </div>
 
   <script>
@@ -813,6 +846,7 @@
     const remoteSession = getRemoteSession();
     let remoteSaveTimer = null;
     let isApplyingRemoteState = false;
+    let dragDepth = 0;
 
     render();
     bindMenu();
@@ -1078,13 +1112,15 @@
           ${cardCaret}
         </summary>
         <div class="body">
-          <div class="grid">
-            ${personInput('name', 'Имя', r.name)}
-            ${suggestInput('city', 'Город', r.city, 'city', cityOptions)}
-            ${combo('age', 'Возраст', ageOptions, r.age)}
-            ${combo('experience', 'Опыт в фармации', experienceOptions, r.experience)}
-            ${suggestInput('workplace', 'Где работает', r.workplace, 'pharmacy', pharmacyOptions)}
-            ${combo('role', 'Должность', roleOptions, r.role)}
+          <div class="body-inner">
+            <div class="grid">
+              ${personInput('name', 'Имя', r.name)}
+              ${suggestInput('city', 'Город', r.city, 'city', cityOptions)}
+              ${combo('age', 'Возраст', ageOptions, r.age)}
+              ${combo('experience', 'Опыт в фармации', experienceOptions, r.experience)}
+              ${suggestInput('workplace', 'Где работает', r.workplace, 'pharmacy', pharmacyOptions)}
+              ${combo('role', 'Должность', roleOptions, r.role)}
+            </div>
           </div>
         </div>
       </details>`;
@@ -1096,7 +1132,6 @@
       if (card.open) {
         body.style.maxHeight = 'none';
         body.style.overflow = 'visible';
-        body.style.paddingBottom = '20px';
       }
       summary.addEventListener('click', event => {
         event.preventDefault();
@@ -1113,18 +1148,16 @@
       save();
       body.style.overflow = 'hidden';
       body.style.maxHeight = '0px';
-      body.style.paddingBottom = '0px';
       body.offsetHeight;
       body.querySelectorAll('[data-quote]').forEach(autoGrow);
       body.style.maxHeight = `${body.scrollHeight}px`;
-      body.style.paddingBottom = '20px';
       scrollCardIntoView(card, body);
-      window.setTimeout(() => {
+      afterBodyTransition(body, () => {
         if (card.open) {
           body.style.maxHeight = 'none';
           body.style.overflow = 'visible';
         }
-      }, 270);
+      });
     }
 
     function scrollCardIntoView(card, body) {
@@ -1154,16 +1187,14 @@
         state.open[card.dataset.card] = false;
         body.style.overflow = 'hidden';
         body.style.maxHeight = `${body.scrollHeight}px`;
-        body.style.paddingBottom = '20px';
         body.offsetHeight;
         body.style.maxHeight = '0px';
-        body.style.paddingBottom = '0px';
-        window.setTimeout(() => {
+        afterBodyTransition(body, () => {
           if (!state.open[card.dataset.card]) {
             card.open = false;
             card.classList.remove('is-closing');
           }
-        }, 270);
+        });
       });
     }
 
@@ -1179,16 +1210,29 @@
       save();
       body.style.overflow = 'hidden';
       body.style.maxHeight = `${body.scrollHeight}px`;
-      body.style.paddingBottom = '20px';
       body.offsetHeight;
       body.style.maxHeight = '0px';
-      body.style.paddingBottom = '0px';
-      window.setTimeout(() => {
+      afterBodyTransition(body, () => {
         if (!state.open[card.dataset.card]) {
           card.open = false;
           card.classList.remove('is-closing');
         }
-      }, 270);
+      });
+    }
+
+    function afterBodyTransition(body, callback) {
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        body.removeEventListener('transitionend', onEnd);
+        callback();
+      };
+      const onEnd = event => {
+        if (event.target === body && event.propertyName === 'max-height') finish();
+      };
+      body.addEventListener('transitionend', onEnd);
+      window.setTimeout(finish, 360);
     }
 
     function personInput(key, placeholder, value = '') {
@@ -1242,8 +1286,10 @@
           ${cardCaret}
         </summary>
         <div class="body">
-          ${notes.map((row, rowIndex) => noteRow(blockIndex, rowIndex, row, notes.length > 1)).join('')}
-          <button class="add-row" data-add="${blockIndex}">+ строка</button>
+          <div class="body-inner">
+            ${notes.map((row, rowIndex) => noteRow(blockIndex, rowIndex, row, notes.length > 1)).join('')}
+            <button class="add-row" data-add="${blockIndex}">+ строка</button>
+          </div>
         </div>
       </details>`;
     }
@@ -1355,6 +1401,7 @@
       document.getElementById('importJsonInput').addEventListener('change', importJson);
       document.getElementById('exportJson').addEventListener('click', () => download(jsonExportFileName(), JSON.stringify(exportData(), null, 2), 'application/json'));
       document.getElementById('exportCsv').addEventListener('click', exportCsv);
+      bindJsonDrop();
       document.addEventListener('click', event => {
         if (!event.target.closest('.menu-wrap')) document.getElementById('menu').classList.remove('open');
         if (!event.target.closest('.combo')) closeCombos();
@@ -1366,6 +1413,40 @@
       const file = event.target.files?.[0];
       event.target.value = '';
       if (!file) return;
+      importJsonFile(file);
+    }
+
+    function bindJsonDrop() {
+      document.addEventListener('dragenter', event => {
+        if (!hasFileDrop(event.dataTransfer)) return;
+        event.preventDefault();
+        dragDepth += 1;
+        document.body.classList.add('dragging-json');
+      });
+      document.addEventListener('dragover', event => {
+        if (!hasFileDrop(event.dataTransfer)) return;
+        event.preventDefault();
+      });
+      document.addEventListener('dragleave', event => {
+        if (!hasFileDrop(event.dataTransfer)) return;
+        dragDepth = Math.max(0, dragDepth - 1);
+        if (!dragDepth) document.body.classList.remove('dragging-json');
+      });
+      document.addEventListener('drop', event => {
+        if (!hasFileDrop(event.dataTransfer)) return;
+        event.preventDefault();
+        dragDepth = 0;
+        document.body.classList.remove('dragging-json');
+        const file = [...event.dataTransfer.files].find(file => file.name.toLowerCase().endsWith('.json'));
+        if (file) importJsonFile(file);
+      });
+    }
+
+    function hasFileDrop(dataTransfer) {
+      return !!dataTransfer && Array.from(dataTransfer.types || []).includes('Files');
+    }
+
+    function importJsonFile(file) {
       const reader = new FileReader();
       reader.addEventListener('load', () => {
         try {
