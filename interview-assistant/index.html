@@ -281,7 +281,9 @@
     }
 
     .interview-row:hover .delete-interview,
-    .note.deletable:hover .delete-row {
+    .note.deletable:hover .delete-row,
+    .note:hover .clear-quote,
+    .note:focus-within .clear-quote {
       opacity: 1;
     }
 
@@ -506,6 +508,7 @@
 
     textarea {
       padding-top: 13px;
+      padding-right: 44px;
       padding-bottom: 13px;
       resize: none;
       overflow: hidden;
@@ -659,6 +662,25 @@
       line-height: 16px;
       opacity: 0;
       transition: opacity .14s ease;
+    }
+
+    .clear-quote {
+      position: absolute;
+      top: 26px;
+      right: 12px;
+      z-index: 2;
+      display: grid;
+      place-items: center;
+      width: 20px;
+      height: 20px;
+      padding: 0;
+      opacity: 0;
+      transform: translateY(-50%);
+      transition: opacity .14s ease;
+    }
+
+    .clear-quote.empty {
+      pointer-events: none;
     }
 
     .emotions {
@@ -1080,11 +1102,24 @@
       document.querySelectorAll('[data-quote]').forEach(input => input.addEventListener('input', () => {
         current().notes[input.dataset.block][input.dataset.row].quote = input.value;
         current().updatedAt = new Date().toISOString();
+        updateQuoteClearButton(input);
         autoGrow(input);
         updateBlockSummary(input.closest('[data-card]'));
         save();
       }));
       document.querySelectorAll('[data-quote]').forEach(autoGrow);
+      document.querySelectorAll('[data-clear-quote]').forEach(button => button.addEventListener('click', () => {
+        const input = document.querySelector(`[data-block="${button.dataset.block}"][data-row="${button.dataset.clearQuote}"][data-quote]`);
+        if (!input) return;
+        input.value = '';
+        current().notes[button.dataset.block][button.dataset.clearQuote].quote = '';
+        current().updatedAt = new Date().toISOString();
+        updateQuoteClearButton(input);
+        autoGrow(input);
+        updateBlockSummary(input.closest('[data-card]'));
+        save();
+        input.focus();
+      }));
       document.querySelectorAll('[data-emotion]').forEach(button => button.addEventListener('click', () => {
         const row = current().notes[button.dataset.block][button.dataset.row];
         row.emotion = row.emotion === button.dataset.emotion ? '' : button.dataset.emotion;
@@ -1367,6 +1402,7 @@
     function noteRow(blockIndex, rowIndex, row, deletable) {
       return `<div class="note ${deletable ? 'deletable' : ''}">
         <textarea rows="1" data-block="${blockIndex}" data-row="${rowIndex}" data-quote placeholder="Цитата или короткое наблюдение">${escapeHtml(row.quote || '')}</textarea>
+        <button class="clear-quote ${row.quote ? '' : 'empty'}" data-block="${blockIndex}" data-clear-quote="${rowIndex}" type="button" aria-label="Очистить цитату">${closeIcon}</button>
         ${deletable ? `<button class="delete-row" data-block="${blockIndex}" data-delete="${rowIndex}" type="button">удалить</button>` : ''}
         <div class="emotions">
           ${Object.entries(emotions).map(([key, emotion]) => `<button class="emotion ${row.emotion === key ? 'active' : ''}" title="${emotion.label}" data-block="${blockIndex}" data-row="${rowIndex}" data-emotion="${key}">${emotion.svg}</button>`).join('')}
@@ -1625,6 +1661,11 @@
       if (input.value) {
         field?.insertAdjacentHTML('afterbegin', `<span class="floating-label">${escapeHtml(input.placeholder)}</span>`);
       }
+    }
+
+    function updateQuoteClearButton(input) {
+      const button = input.closest('.note')?.querySelector('[data-clear-quote]');
+      button?.classList.toggle('empty', !input.value);
     }
 
     function filterOptions(value, options) {
