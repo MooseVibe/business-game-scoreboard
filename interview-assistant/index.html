@@ -783,6 +783,7 @@
         <button id="importJson" type="button">Загрузить JSON</button>
         <button id="exportJson">Выгрузить JSON</button>
         <button id="exportCsv">Выгрузить CSV</button>
+        <button id="clearForm" type="button">Очистить форму</button>
         <input id="importJsonInput" type="file" accept="application/json,.json" hidden>
       </div>
     </div>
@@ -889,8 +890,13 @@
         }
       } catch {
       }
+      return initialState();
+    }
+
+    function initialState() {
       const id = makeId();
-      return { currentId: id, open: { respondent: true }, interviews: [{ id, respondent: {}, notes: {}, saved: true, createdAt: new Date().toISOString() }] };
+      const now = new Date().toISOString();
+      return { currentId: id, open: { respondent: true }, interviews: [{ id, respondent: {}, notes: {}, saved: true, createdAt: now, updatedAt: now }] };
     }
 
     function migrateNotesToAssistantBlocks(saved) {
@@ -1438,6 +1444,7 @@
       document.getElementById('importJsonInput').addEventListener('change', importJson);
       document.getElementById('exportJson').addEventListener('click', () => download(jsonExportFileName(), JSON.stringify(exportData(), null, 2), 'application/json'));
       document.getElementById('exportCsv').addEventListener('click', exportCsv);
+      document.getElementById('clearForm').addEventListener('click', clearForm);
       bindJsonDrop();
       document.addEventListener('click', event => {
         if (!event.target.closest('.menu-wrap')) document.getElementById('menu').classList.remove('open');
@@ -1544,6 +1551,18 @@
         interview.respondent.city || '', interview.respondent.workplace || '', interview.respondent.role || '', interview.respondent.experience || ''
       ]))));
       download('interview.csv', `\uFEFF${rows.map(row => row.map(csvCell).join(',')).join('\n')}`, 'text/csv;charset=utf-8');
+    }
+
+    function clearForm() {
+      if (!confirm('Очистить форму? Все респонденты, поля, цитаты и эмоции будут удалены.')) return;
+      const nextState = initialState();
+      state.currentId = nextState.currentId;
+      state.open = nextState.open;
+      state.interviews = nextState.interviews;
+      state.activeQuestionBlock = '';
+      save();
+      document.getElementById('menu').classList.remove('open');
+      render();
     }
 
     function recordInterview() {
