@@ -44,7 +44,7 @@ const defaultFortuneRules = [
 
 let nextFortuneRuleId = 0;
 let scores = createEmptyScores();
-let teamModifiers = Object.fromEntries(teams.map((team) => [team, 0]));
+let teamRuleSelections = Object.fromEntries(teams.map((team) => [team, null]));
 let fortuneRuleBank = defaultFortuneRules.map(createFortuneRule);
 let fortuneRules = [...fortuneRuleBank];
 let fortuneHistory = [];
@@ -68,8 +68,7 @@ const customScoreForm = document.querySelector("#customScoreForm");
 const customScoreInput = document.querySelector("#customScoreInput");
 const teamRulePopoverNode = document.querySelector("#teamRulePopover");
 const teamRuleTitleNode = document.querySelector("#teamRuleTitle");
-const customModifierForm = document.querySelector("#customModifierForm");
-const customModifierInput = document.querySelector("#customModifierInput");
+const teamRuleOptionsNode = document.querySelector("#teamRuleOptions");
 const timerDisplayNode = document.querySelector("#timerDisplay");
 const timerButtons = document.querySelectorAll("[data-timer-button]");
 const clearTableButton = document.querySelector("#clearTable");
@@ -117,8 +116,8 @@ function gameTotal(team) {
   return stages.reduce((sum, stage) => sum + stageTotal(team, stage.id), 0);
 }
 
-function applyTeamModifier(team, points) {
-  return Math.max(0, points + teamModifiers[team]);
+function normalizeScore(points) {
+  return Math.max(0, points);
 }
 
 function escapeHtml(value) {
@@ -263,7 +262,7 @@ function renderRows() {
 
         return `
           <tr>
-            <th class="team-cell team-cell-${teamMarkClasses[team]}" scope="row"><button class="team-rule-button" data-team-rule="${team}" type="button" aria-label="${team} • правило начисления">${renderTeamMark(team)}<div class="team-name">${team}</div>${renderTeamModifier(team)}</button></th>
+            <th class="team-cell team-cell-${teamMarkClasses[team]}" scope="row"><button class="team-rule-button" data-team-rule="${team}" type="button" aria-label="${team} • правило команды">${renderTeamMark(team)}<div class="team-name">${team}</div>${renderTeamRuleTag(team)}</button></th>
             ${questionCells}
             <td class="total-cell">${stageTotal(team, stage.id)}</td>
             <td class="game-total-cell">${gameTotal(team)}</td>
@@ -291,7 +290,7 @@ function renderRows() {
 
       return `
         <tr>
-          <th class="team-cell team-cell-${teamMarkClasses[team]}" scope="row"><button class="team-rule-button" data-team-rule="${team}" type="button" aria-label="${team} • правило начисления">${renderTeamMark(team)}<div class="team-name">${team}</div>${renderTeamModifier(team)}</button></th>
+          <th class="team-cell team-cell-${teamMarkClasses[team]}" scope="row"><button class="team-rule-button" data-team-rule="${team}" type="button" aria-label="${team} • правило команды">${renderTeamMark(team)}<div class="team-name">${team}</div>${renderTeamRuleTag(team)}</button></th>
           ${stageCells}
           <td class="game-total-cell">${gameTotal(team)}</td>
         </tr>
@@ -300,9 +299,9 @@ function renderRows() {
     .join("");
 }
 
-function renderTeamModifier(team) {
-  const modifier = teamModifiers[team];
-  return modifier ? `<span>${modifier}</span>` : "";
+function renderTeamRuleTag(team) {
+  const rule = teamRuleSelections[team];
+  return rule ? `<span class="team-rule-tag">${escapeHtml(rule.text)}</span>` : "";
 }
 
 function renderTeamMark(team) {
@@ -411,6 +410,25 @@ function renderFortuneRuleBankList() {
     .join("");
 }
 
+function renderTeamRuleOptions() {
+  if (!selectedTeam) return;
+
+  const selectedRule = teamRuleSelections[selectedTeam];
+  const clearClass = selectedRule ? "" : " active";
+  const availableRules = fortuneHistory.length ? fortuneHistory : fortuneRuleBank;
+  const ruleButtons = availableRules
+    .map((rule) => {
+      const activeClass = selectedRule?.id === rule.id ? " active" : "";
+      return `<button class="${activeClass}" data-team-rule-id="${rule.id}" type="button">${escapeHtml(rule.text)}</button>`;
+    })
+    .join("");
+
+  teamRuleOptionsNode.innerHTML = `
+    <button class="${clearClass}" data-team-rule-clear type="button">Без правила</button>
+    ${ruleButtons}
+  `;
+}
+
 function showFortuneScreen() {
   activeScreen = "fortune";
   hidePopover();
@@ -478,6 +496,7 @@ function resetFortuneSpins() {
 
   fortuneRules = [...fortuneRuleBank];
   fortuneHistory = [];
+  teamRuleSelections = Object.fromEntries(teams.map((team) => [team, null]));
   wheelRotation = 0;
   fortuneWheel.style.transition = "none";
   fortuneWheel.style.transform = "rotate(0deg)";
@@ -487,6 +506,7 @@ function resetFortuneSpins() {
   renderFortuneWheel();
   renderFortuneHistory();
   renderFortuneRuleBankList();
+  renderRows();
 }
 
 function showPopover(button) {
@@ -523,13 +543,13 @@ function showPopover(button) {
 
 function showTeamRulePopover(button) {
   selectedTeam = button.dataset.teamRule;
-  teamRuleTitleNode.textContent = `${selectedTeam} • правило начисления`;
-  customModifierInput.value = teamModifiers[selectedTeam] || "";
+  teamRuleTitleNode.textContent = `${selectedTeam} • правило команды`;
+  renderTeamRuleOptions();
   teamRulePopoverNode.hidden = false;
 
   const buttonRect = button.getBoundingClientRect();
   const shellRect = document.querySelector(".game-shell").getBoundingClientRect();
-  const popoverWidth = 250;
+  const popoverWidth = 300;
   const popoverHeight = teamRulePopoverNode.offsetHeight;
   const left = Math.min(
     Math.max(buttonRect.left - shellRect.left, 8),
@@ -555,20 +575,20 @@ function hidePopover() {
 function setSelectedScore(points) {
   if (!selectedCell) return;
 
-  scores[selectedCell.team][selectedCell.stage][selectedCell.question] = applyTeamModifier(selectedCell.team, points);
+  scores[selectedCell.team][selectedCell.stage][selectedCell.question] = normalizeScore(points);
   hidePopover();
   renderRows();
 }
 
-function setScore(team, stage, question, points, useModifier = true) {
-  scores[team][stage][question] = useModifier ? applyTeamModifier(team, points) : Math.max(0, points);
+function setScore(team, stage, question, points) {
+  scores[team][stage][question] = normalizeScore(points);
   hidePopover();
   renderRows();
 }
 
 function clearTable() {
   scores = createEmptyScores();
-  teamModifiers = Object.fromEntries(teams.map((team) => [team, 0]));
+  teamRuleSelections = Object.fromEntries(teams.map((team) => [team, null]));
   hidePopover();
   renderRows();
 }
@@ -631,11 +651,25 @@ function isScorePopoverOpen() {
   return !popoverNode.hidden;
 }
 
+function isTeamRulePopoverOpen() {
+  return !teamRulePopoverNode.hidden;
+}
+
 rowsNode.addEventListener("click", (event) => {
   const teamButton = event.target.closest("[data-team-rule]");
   if (teamButton) {
+    if (isTeamRulePopoverOpen() && selectedTeam === teamButton.dataset.teamRule) {
+      hidePopover();
+      return;
+    }
+
     hidePopover();
     showTeamRulePopover(teamButton);
+    return;
+  }
+
+  if (isTeamRulePopoverOpen() && event.target.closest(".score-cell")) {
+    hidePopover();
     return;
   }
 
@@ -661,13 +695,17 @@ rowsNode.addEventListener("click", (event) => {
       cell.dataset.stage,
       Number(cell.dataset.question),
       points,
-      points !== 0,
     );
     return;
   }
 
   const button = event.target.closest(".score-cell");
   if (!button) return;
+
+  if (isTeamRulePopoverOpen()) {
+    hidePopover();
+    return;
+  }
 
   if (activeView !== "all") {
     if (isScorePopoverOpen()) {
@@ -701,10 +739,23 @@ popoverNode.addEventListener("click", (event) => {
 });
 
 teamRulePopoverNode.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-team-modifier]");
+  const clearButton = event.target.closest("[data-team-rule-clear]");
+  if (clearButton && selectedTeam) {
+    teamRuleSelections[selectedTeam] = null;
+    hidePopover();
+    renderRows();
+    return;
+  }
+
+  const button = event.target.closest("[data-team-rule-id]");
   if (!button || !selectedTeam) return;
 
-  teamModifiers[selectedTeam] = Number(button.dataset.teamModifier);
+  const ruleId = Number(button.dataset.teamRuleId);
+  const rule = fortuneHistory.find((item) => item.id === ruleId)
+    || fortuneRuleBank.find((item) => item.id === ruleId);
+  if (!rule) return;
+
+  teamRuleSelections[selectedTeam] = rule;
   hidePopover();
   renderRows();
 });
@@ -718,17 +769,7 @@ customScoreForm.addEventListener("submit", (event) => {
     selectedCell.stage,
     selectedCell.question,
     Number(customScoreInput.value || 0),
-    false,
   );
-});
-
-customModifierForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  if (!selectedTeam) return;
-
-  teamModifiers[selectedTeam] = Number(customModifierInput.value || 0);
-  hidePopover();
-  renderRows();
 });
 
 document.addEventListener("click", (event) => {
@@ -815,10 +856,16 @@ fortuneRulesNode.addEventListener("click", (event) => {
   fortuneRuleBank = fortuneRuleBank.filter((rule) => rule.id !== ruleId);
   fortuneRules = fortuneRules.filter((rule) => rule.id !== ruleId);
   fortuneHistory = fortuneHistory.filter((rule) => rule.id !== ruleId);
+  teams.forEach((team) => {
+    if (teamRuleSelections[team]?.id === ruleId) {
+      teamRuleSelections[team] = null;
+    }
+  });
   fortuneResultNode.textContent = fortuneRules.length ? fortuneResultNode.textContent : "Добавьте правила";
   renderFortuneWheel();
   renderFortuneHistory();
   renderFortuneRuleBankList();
+  renderRows();
 });
 
 fortuneRulesNode.addEventListener("input", (event) => {
@@ -841,6 +888,7 @@ fortuneRulesNode.addEventListener("input", (event) => {
   }
   renderFortuneHistory();
   renderFortuneRuleBankList();
+  renderRows();
 });
 
 tableWrap.addEventListener(

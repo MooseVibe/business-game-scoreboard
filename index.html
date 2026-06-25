@@ -46,14 +46,18 @@
 
       <section class="fortune-screen" id="fortuneScreen" aria-label="Колесо фортуны" hidden>
         <button class="fortune-back" id="fortuneBack" type="button">‹ Вернуться к таблице</button>
-        <button class="fortune-rules-open" id="fortuneRulesOpen" type="button">Правила</button>
-        <button class="fortune-reset" id="fortuneReset" type="button">Сбросить прокруты</button>
         <aside class="fortune-panel fortune-panel-left" aria-label="Все правила">
-          <div class="fortune-history-title">Правила</div>
+          <div class="fortune-panel-header">
+            <div class="fortune-history-title">Правила</div>
+            <button class="fortune-panel-action fortune-rules-open" id="fortuneRulesOpen" type="button">Изменить</button>
+          </div>
           <ol class="fortune-history-list fortune-rule-bank-list" id="fortuneRuleBankList"></ol>
         </aside>
         <aside class="fortune-panel fortune-panel-right" aria-label="История прокрутов">
-          <div class="fortune-history-title">Прокруты</div>
+          <div class="fortune-panel-header">
+            <div class="fortune-history-title">Прокруты</div>
+            <button class="fortune-panel-action fortune-reset" id="fortuneReset" type="button">Сбросить</button>
+          </div>
           <ol class="fortune-history-list" id="fortuneHistory"></ol>
         </aside>
         <div class="fortune-layout">
@@ -97,16 +101,7 @@
 
       <div class="team-rule-popover" id="teamRulePopover" hidden>
         <div class="popover-title" id="teamRuleTitle"></div>
-        <div class="team-rule-options">
-          <button data-team-modifier="0" type="button">Без правила</button>
-          <button data-team-modifier="-10" type="button">-10 каждый раз</button>
-          <button data-team-modifier="-20" type="button">-20 каждый раз</button>
-          <button data-team-modifier="-30" type="button">-30 каждый раз</button>
-        </div>
-        <form class="custom-score-form" id="customModifierForm">
-          <input id="customModifierInput" type="number" inputmode="numeric" step="10" placeholder="Свое правило">
-          <button class="chip" type="submit">OK</button>
-        </form>
+        <div class="team-rule-options" id="teamRuleOptions"></div>
       </div>
     </main>
 
